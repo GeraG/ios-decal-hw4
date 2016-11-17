@@ -27,6 +27,16 @@ class PlayerViewController: UIViewController {
     var didPlay: [Track]!
 
     var paused = true
+    
+    var currentTrackTime: Double {
+        get {
+            return CMTimeGetSeconds(player.currentTime())
+        }
+        set {
+            let timeValue = CMTimeMakeWithSeconds(newValue, 1)
+            player.seek(to: timeValue, toleranceBefore: kCMTimeZero, toleranceAfter: kCMTimeZero)
+        }
+    }
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -135,7 +145,18 @@ class PlayerViewController: UIViewController {
         let track = tracks[currentIndex]
         let url = URL(string: "https://api.soundcloud.com/tracks/\(track.id as Int)/stream?client_id=\(clientID)")!
         // FILL ME IN
-
+        if paused {
+            if player.items().count == 0 {
+                let song = AVPlayerItem(url: url)
+                player.insert(song, after: nil)
+            }
+            player.play()
+            paused = false
+        } else {
+            player.pause()
+            paused = true
+        }
+        sender.isSelected = !sender.isSelected
     }
 
     /*
@@ -146,8 +167,16 @@ class PlayerViewController: UIViewController {
      */
     func nextTrackTapped(_ sender: UIButton) {
         // FILL ME IN
+        if currentIndex < tracks.count - 1 {
+            player.removeAllItems()
+            currentIndex! += 1
+            loadTrackElements()
+            paused = true
+            playPauseButton.isSelected = false // set button to paused state
+            playOrPauseTrack(playPauseButton)
+        }
     }
-
+    
     /*
      * Called when the previous button is tapped. It should behave in 2 possible
      * ways:
@@ -160,6 +189,16 @@ class PlayerViewController: UIViewController {
 
     func previousTrackTapped(_ sender: UIButton) {
         // FILL ME IN
+        if currentTrackTime > 3 {
+            currentTrackTime = 0.0 // replay track from beginning
+        } else if currentIndex! > 0 { // && tracks.count > 0
+                player.removeAllItems()
+                currentIndex! -= 1
+                loadTrackElements()
+                paused = true
+                playPauseButton.isSelected = false // set button to paused state
+                playOrPauseTrack(playPauseButton)
+        }
     }
 
 
